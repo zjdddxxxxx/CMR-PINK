@@ -1,0 +1,1176 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CMR Wallet - المحفظة الآمنة</title>
+<!-- مكتبة توليد الباركود QR Code -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<!-- مكتبة قراءة ومسح الباركود عبر الكاميرا والملفات -->
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+<style>
+:root{--bg:#f3f6fb;--card:#fff;--text:#142033;--muted:#718096;--blue:#1769ff;--line:#e5ebf3;--green:#10b981;--red:#d94a5b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,Tahoma,sans-serif}
+header{background:#101b32;color:#fff;padding:15px 18px;display:flex;justify-content:space-between;align-items:center}
+.brand{font-weight:900;font-size:20px}.brand span{color:#76a6ff}
+.auth-btn{background:#4285F4;color:white;border:0;padding:8px 14px;border-radius:8px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px}
+main{max-width:720px;margin:16px auto;padding:0 12px}.page{display:none}.page.active{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:12px;box-shadow:0 4px 20px rgba(20,32,51,0.04)}
+h1{font-size:21px;margin:0 0 4px}.muted{color:var(--muted);font-size:13px}.title{font-size:17px;font-weight:850;margin:0 0 12px}
+.balance{background:linear-gradient(135deg,#145cff,#183b9d);color:white}.balance .muted{color:#d9e5ff}
+.amount{font-size:34px;font-weight:900;margin:8px 0}.pill{font-size:11px;background:#ffffff20;padding:5px 9px;border-radius:20px}
+.actions{display:flex;gap:8px;margin-top:15px}
+.btn{border:0;border-radius:11px;padding:11px 14px;font:inherit;font-weight:750;cursor:pointer;background:var(--blue);color:white;width:100%}
+.secondary{background:#edf3ff;color:#1758ce}.ghost{background:#f2f5fa;color:#344258}.danger{background:var(--red)}
+label{display:block;font-size:13px;color:#526078;margin:11px 0 5px}
+input,select{width:100%;padding:11px;border:1px solid #dce4ef;border-radius:10px;font:inherit;background:#fff}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.idbox{display:flex;justify-content:space-between;align-items:center;direction:ltr;background:#f5f8fd;border:1px dashed #cbd8eb;padding:10px;border-radius:11px;font-weight:800}
+.note{font-size:12px;color:var(--muted);line-height:1.65;margin-top:10px}
+.nav{position:sticky;bottom:0;background:#fff;border-top:1px solid var(--line);display:flex;max-width:720px;margin:10px auto 0;padding:7px 4px calc(7px + env(safe-area-inset-bottom));z-index:4}
+.nav button{flex:1;min-width:0;border:0;background:transparent;color:#778398;font:inherit;font-size:11px;font-weight:750;padding:7px 2px;border-radius:10px;display:flex;flex-direction:column;align-items:center;gap:3px}
+.nav button.active{background:#edf3ff;color:#1769ff}
+.nav svg{width:20px;height:20px;fill:currentColor}
+.toast{display:none;position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#142033;color:white;padding:11px 16px;border-radius:12px;z-index:9}
+#loginOverlay{text-align:center;padding:30px 20px}
+.verify-code-box{font-size: 22px; letter-spacing: 5px; text-align: center; font-weight: bold;}
+
+.saved-account-item { display: flex; align-items: center; justify-content: space-between; background: #f8fafc; border: 1px solid var(--line); padding: 12px; border-radius: 12px; margin-bottom: 8px; cursor: pointer; transition: 0.2s; }
+.saved-account-item:hover { background: #edf3ff; }
+
+.search-container { position: relative; margin-top: 10px; }
+.search-results-full { margin-top: 15px; display: flex; flex-direction: column; gap: 8px; }
+.search-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: #f8fafc; border: 1px solid var(--line); border-radius: 12px; cursor: pointer; transition: 0.2s; }
+.search-item:hover { background: #edf3ff; }
+.user-avatar { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; background: #cbd8eb; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #526078; flex-shrink: 0; border: 2px solid var(--blue); }
+.profile-header-flex { display: flex; align-items: center; gap: 15px; margin-bottom: 5px; }
+
+/* تصميم حاوية الـ QR Code مع إطار أبيض واسع لضمان القراءة الفورية */
+.qrcode-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px; position: relative; }
+.qrcode-box { position: relative; background: #fff; padding: 18px; border-radius: 14px; border: 1px solid var(--line); display: inline-block; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+.qr-logo-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 42px; height: 42px; background: #101b32; border: 3px solid #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #76a6ff; font-weight: 900; font-size: 11px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
+
+/* تصميم بطاقات الإشعارات */
+.msg-card { background: #ffffff; border: 1px solid var(--line); border-left: 4px solid var(--green); border-radius: 14px; padding: 16px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
+.msg-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f4f8; padding-bottom: 10px; }
+.msg-sender-info { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 14px; color: var(--text); }
+.msg-amount-badge { background: #eefcf6; color: var(--green); padding: 6px 12px; border-radius: 20px; font-weight: 900; font-size: 15px; border: 1px solid #c6f6d5; }
+.msg-body-box { background: #f8fafc; padding: 12px; border-radius: 10px; border: 1px solid #edf2f7; font-size: 13.5px; color: #334155; }
+.msg-footer { display: flex; justify-content: space-between; align-items: center; font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+
+/* نافذة الباند والتحذيرات المنبثقة */
+.ban-modal { display:none; position:fixed; inset:0; background:rgba(16,27,50,0.8); z-index:99; align-items:center; justify-content:center; padding:15px; }
+.ban-card { background:#fff; width:100%; max-width:420px; border-radius:20px; padding:24px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.2); border-top: 5px solid var(--red); }
+.ban-icon { font-size:45px; margin-bottom:10px; }
+
+@media(max-width:520px){.row{grid-template-columns:1fr}.amount{font-size:30px}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">CMR <span>WALLET</span></div>
+  <div id="authHeader">
+    <button class="auth-btn" onclick="showCreateAccountForm()">إنشاء حساب جديد</button>
+  </div>
+</header>
+
+<main>
+  <!-- شاشة تسجيل الدخول وإدارة الحسابات -->
+  <div class="page active" id="loginPage">
+    <div class="card" id="loginOverlay">
+      <h1>مرحباً بك في محفظة CMR 🔐</h1>
+      <p class="muted">اختر حسابك المسجل للدخول فوراً أو انشئ حساباً جديداً</p>
+
+      <!-- قائمة الحسابات المحفوظة -->
+      <div id="savedAccountsSection" style="margin-top: 15px; text-align: right; display: none;">
+        <label style="font-weight: bold; margin-bottom: 8px;">حساباتك على هذا الجهاز:</label>
+        <div id="savedAccountsList"></div>
+        <button class="btn secondary" style="margin-top: 10px;" onclick="showCreateAccountForm()">➕ إنشاء حساب جديد</button>
+      </div>
+      
+      <!-- نموذج إنشاء حساب جديد فقط -->
+      <div id="authFormSection" style="display: none; margin-top: 15px; text-align: right;">
+        <div id="formTitle" style="font-weight: bold; font-size: 16px; margin-bottom: 10px; color: var(--blue);">إنشاء حساب جديد</div>
+        
+        <label>اسم المستخدم:</label>
+        <input type="text" id="usernameInput" placeholder="@username" style="direction: ltr; text-align: right; margin-bottom: 10px;">
+        
+        <label>كلمة المرور:</label>
+        <input type="password" id="passwordInput" placeholder="••••••••" style="direction: ltr; text-align: right; margin-bottom: 15px;">
+        
+        <button class="btn" onclick="processAuthentication()">متابعة وإنشاء الحساب</button>
+        <button class="btn ghost" style="margin-top: 8px;" onclick="backToSavedAccounts()" id="backAccountsBtn">العودة للحسابات</button>
+      </div>
+
+      <!-- مرحلة التحقق الأمني (OTP) -->
+      <div id="stepVerification" style="display:none; margin-top:15px;">
+        <div style="background:#eef4ff; border:1px solid #c7d9ff; padding:10px; border-radius:10px; margin-bottom:10px;">
+          <span class="muted">رمز التحقق الأمني الخاص بك:</span>
+          <h2 id="generatedOTP" style="margin:5px 0; color:#1769ff; letter-spacing:3px;">1234</h2>
+        </div>
+        <label style="text-align: right;">أدخل رمز التحقق أعلاه لتأكيد إنشاء الحساب:</label>
+        <input type="text" id="otpInput" class="verify-code-box" placeholder="0000" maxlength="4">
+        <button class="btn" style="margin-top:15px;" onclick="verifyAndCreateAccount()">تأكيد وإنشاء الحساب</button>
+        <button class="btn ghost" style="margin-top:8px;" onclick="cancelVerification()">إلغاء</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- محتوى الرئيسية -->
+  <div class="page" id="walletApp">
+    <div class="card">
+      <div class="profile-header-flex">
+        <div id="headerAvatarContainer"></div>
+        <div>
+          <h1>الرئيسية 🏠</h1>
+          <div class="muted" id="welcomeUser">أهلاً بك</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card balance">
+      <div class="muted">الرصيد المتاح</div>
+      <div class="amount" id="balance">$0.00</div>
+      <span class="pill">CMR USD · حساب موثق</span>
+      <div class="actions">
+        <button class="btn secondary" onclick="go('transfer')">تحويل</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="title">الرمز الفريد للمحفظة (UID)</div>
+      <div class="idbox"><span id="walletUniqueId">CMR_.......</span><button class="btn secondary" onclick="copyId()">نسخ الرمز</button></div>
+      <div class="note">هذا الرمز الطويل والفريد خاص بحسابك ومستقل عن يوزرك.</div>
+    </div>
+
+    <!-- كارت باركود المحفظة مع تحسين الحواف والأبعاد لقراءة فائقة السرعة -->
+    <div class="card">
+      <div class="title">📱 باركود المحفظة الخاص بك</div>
+      <p class="muted">اعرض هذا الباركود للآخرين ليقوموا بمسحه وتحويل الرصيد إليك فوراً.</p>
+      
+      <!-- زر تحميل صورة الباركود -->
+      <button class="btn secondary" style="margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="downloadMyQRCode()">
+        <svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:currentColor;"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+        <span>تحميل صورة الباركود الخاصة بي</span>
+      </button>
+
+      <div class="qrcode-wrapper">
+        <div class="qrcode-box">
+          <div id="userQRCode"></div>
+          <div class="qr-logo-overlay">CMR</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- صفحة البحث المستقلة -->
+  <div class="page" id="searchPage">
+    <div class="card">
+      <div class="title">🔍 البحث عن الأشخاص والمستخدمين</div>
+      <label>ابحث باليوزر أو بالرمز الفريد للمحفظة:</label>
+      <input id="fullSearchInput" placeholder="اكتب للبحث (مثال: @username أو CMR_...)" style="direction: ltr; text-align: right;" oninput="executeFullSearch(this.value)">
+      
+      <div id="fullSearchResults" class="search-results-full">
+        <div class="muted" style="text-align:center; padding: 20px;">ابدأ الكتابة في خانة البحث لعرض المستخدمين...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- صفحة مسح الباركود بالكاميرا -->
+  <div class="page" id="scannerPage">
+    <div class="card">
+      <div class="title">📷 مسح باركود المحفظة</div>
+      <p class="muted">اضغط على زر تشغيل الكاميرا أدناه للمسح المباشر، أو ارفع صورة باركود من هاتفك.</p>
+      
+      <button class="btn secondary" style="margin-bottom: 12px;" onclick="startScannerCameraManually()">▶ تشغيل الكاميرا المباشرة</button>
+      <button class="btn ghost" style="margin-bottom: 15px; display:none;" id="stopCamBtn" onclick="stopScannerCamera()">⏹ إيقاف الكاميرا</button>
+
+      <div id="reader" style="width: 100%; border-radius: 12px; overflow: hidden;"></div>
+      
+      <div style="margin-top: 15px;">
+        <label>أو اختر صورة باركود من الألبوم / الملفات:</label>
+        <input type="file" id="qrFileInput" accept="image/*" style="padding: 7px; background: #f8fafc;" onchange="scanQrFromFile(this)">
+      </div>
+    </div>
+  </div>
+
+  <!-- صفحة الإشعارات المستقلة -->
+  <div class="page" id="messagesPage">
+    <div class="card" style="min-height: 400px;">
+      <div class="title">🔔 سجل الإشعارات والتحويلات الواردة</div>
+      <p class="muted">هنا تظهر كافة إشعارات الإيداع والتحويلات الواردة إليك بتصميم منسق.</p>
+      
+      <div id="messagesContainer" style="margin-top: 15px;">
+        <div class="muted" style="text-align: center; padding: 40px;">لا توجد إشعارات أو رسائل حتى الآن.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- صفحة التحويل -->
+  <div class="page" id="transfer">
+    <div class="card">
+      <div class="title">تحويل رصيد 💸</div>
+      
+      <div class="search-container">
+        <label>ابحث عن مستلم التحويل (يوزر أو رمز فريد)</label>
+        <input id="recipient" placeholder="اكتب للبحث (@username أو CMR_...)" style="direction: ltr; text-align: right;" oninput="transferSearchUsers(this.value)" onclick="transferSearchUsers(this.value)">
+        <div id="transferSearchResults" class="search-results-full" style="position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #dce4ef; border-radius: 10px; max-height: 200px; overflow-y: auto; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: none; padding: 5px;"></div>
+      </div>
+
+      <div class="row" style="margin-top:11px;">
+        <div><label>المبلغ بالدولار</label><input id="amount" type="number" min="0.01" step="0.01" placeholder="0.00"></div>
+        <div><label>رسالة التحويل</label><input id="memo" maxlength="80" placeholder="اختياري"></div>
+      </div>
+      <button class="btn" style="margin-top:13px" onclick="send()">إرسال التحويل</button>
+    </div>
+  </div>
+
+  <!-- لوحة تحكم الأدمن -->
+  <div class="page" id="adminPanel">
+    <div class="card" style="border: 2px solid var(--blue);">
+      <div class="title">🛡️ لوحة تحكم الأدمن (خاصة بـ @cmr)</div>
+      
+      <label>يوزر المستخدم المستهدف:</label>
+      <input id="adminTargetUser" placeholder="@username" style="direction: ltr; text-align: right;">
+      
+      <div class="row" style="margin-top:8px;">
+        <div><label>المبلغ ($)</label><input id="adminAmount" type="number" step="0.01" placeholder="0.00"></div>
+        <div>
+          <label>العملية</label>
+          <select id="adminActionType">
+            <option value="add">إضافة (زيادة رصيد)</option>
+            <option value="sub">خصم من الرصيد</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn" style="margin-top:10px;" onclick="adminUpdateBalance()">تنفيذ تعديل الرصيد</button>
+      <hr style="margin:20px 0; border:0; border-top:1px solid var(--line);">
+
+      <label>اليوزر القديم:</label>
+      <input id="oldUsername" placeholder="@old_user" style="direction: ltr; text-align: right;">
+      <label>اليوزر الجديد:</label>
+      <input id="newUsername" placeholder="@new_user" style="direction: ltr; text-align: right;">
+      <button class="btn secondary" style="margin-top:10px;" onclick="adminChangeUsername()">تغيير اسم المستخدم</button>
+      <hr style="margin:20px 0; border:0; border-top:1px solid var(--line);">
+
+      <label>طرد مستخدم (حذف حسابه نهائياً):</label>
+      <input id="kickUserTag" placeholder="@username" style="direction: ltr; text-align: right;">
+      <button class="btn danger" style="margin-top:10px;" onclick="adminKickUser()">طرد المستخدم نهائياً</button>
+      <hr style="margin:20px 0; border:0; border-top:1px solid var(--line);">
+
+      <label>تبنيد مستخدم (حظر مؤقت رسمي):</label>
+      <input id="banUserTag" placeholder="@username" style="direction: ltr; text-align: right; margin-bottom:8px;">
+      
+      <div class="row" style="margin-bottom:8px;">
+        <div>
+          <label>المدة الرقمية:</label>
+          <input id="banValueInput" type="number" min="1" placeholder="مثال: 10">
+        </div>
+        <div>
+          <label>وحدة القياس:</label>
+          <select id="banUnitSelect">
+            <option value="seconds">ثوانٍ</option>
+            <option value="minutes">دقائق</option>
+            <option value="hours">ساعات</option>
+          </select>
+        </div>
+      </div>
+
+      <label>سبب الحظر / رسالة المخالفة:</label>
+      <input id="banReasonInput" placeholder="مثال: تم حظر حسابك بسبب مخالفة شروط الخدمة">
+      
+      <div class="row" style="margin-top:10px;">
+        <button class="btn danger" style="background:#b91c1c;" onclick="adminBanUser()">تطبيق الباند الرسمي</button>
+        <button class="btn secondary" style="background:var(--green);" onclick="adminUnbanUser()">🔓 فك الباند الفوري</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- صفحة الإعدادات -->
+  <div class="page" id="settings">
+    <div class="card">
+      <div class="title">الإعدادات ⚙️</div>
+      <p class="muted" id="userInfoDisplay"></p>
+      <p class="muted" id="userUniqueIdDisplay" style="direction: ltr; text-align: right;"></p>
+      
+      <label style="margin-top:15px;">اختر صورة شخصية من المعرض أو الملفات:</label>
+      <input type="file" id="avatarFileinput" accept="image/*" style="padding: 7px; background: #f8fafc;">
+      <button class="btn secondary" style="margin-top:8px;" onclick="uploadAvatarFile()">حفظ واعتماد الصورة</button>
+
+      <button class="btn danger" style="margin-top:20px;" onclick="logout()">تسجيل الخروج</button>
+    </div>
+  </div>
+</main>
+
+<!-- نافذة تأكيد تسجيل الخروج -->
+<div class="ban-modal" id="logoutConfirmModal">
+  <div class="ban-card" style="border-top-color: var(--blue);">
+    <div class="ban-icon">⚠️</div>
+    <h2 style="color: var(--text); margin-bottom: 8px;">تأكيد تسجيل الخروج</h2>
+    <p style="font-size: 14px; color: var(--muted); margin-bottom: 20px; font-weight: bold;">هل أنت متأكد أنك تريد تسجيل الخروج من الحساب؟</p>
+    <div class="row">
+      <button class="btn danger" onclick="confirmLogout()">نعم، خروج</button>
+      <button class="btn ghost" onclick="closeLogoutModal()">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- نافذة منبثقة خاصة بالحظر (الباند) -->
+<div class="ban-modal" id="banModal">
+  <div class="ban-card">
+    <div class="ban-icon">🚫</div>
+    <h2 style="color: var(--red); margin-bottom: 8px;">حسابك محظور مؤقتاً</h2>
+    <p id="banReasonText" style="font-size: 14px; color: var(--text); margin-bottom: 12px; font-weight: bold;"></p>
+    <div style="background: #f8fafc; padding: 10px; border-radius: 10px; border: 1px solid var(--line); margin-bottom: 15px;">
+      <span class="muted" style="display: block; font-size: 12px;">تاريخ انتهاء الباند:</span>
+      <span id="banExpiryText" style="font-size: 13px; font-weight: bold; color: var(--blue);"></span>
+    </div>
+    <button class="btn" onclick="forceLogoutDueToBan()">حسناً</button>
+  </div>
+</div>
+
+<!-- شريط التنقل السفلي -->
+<nav class="nav" id="bottomNav" style="display:none">
+  <button class="active" data-page="walletApp">
+    <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+    الرئيسية
+  </button>
+  <button data-page="searchPage">
+    <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+    البحث
+  </button>
+  <button data-page="scannerPage">
+    <svg viewBox="0 0 24 24"><path d="M4 6h2v12H4zm2 0h2v12H6zm3 0h3v12H9zm4 0h1v12h-1zm2 0h2v12h-2zm3 0h3v12h-3zM2 4h4v2H2zm16 0h4v2h-18z"/></svg>
+    الباركود
+  </button>
+  <button data-page="messagesPage">
+    <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>
+    الإشعارات
+  </button>
+  <button data-page="transfer">
+    <svg viewBox="0 0 24 24"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/></svg>
+    تحويل
+  </button>
+  <button data-page="settings">
+    <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+    الإعدادات
+  </button>
+  <div id="adminNavContainer" style="flex:1; display:contents;"></div>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const $ = id => document.getElementById(id);
+
+  let walletDatabase = JSON.parse(localStorage.getItem('cmr_wallets_v2') || '{}');
+  let currentUserTag = localStorage.getItem('cmr_current_user_tag') || null;
+  let activeOTP = null;
+  let html5QrCode = null;
+
+  window.onload = () => {
+    if (currentUserTag && walletDatabase[currentUserTag]) {
+      let user = walletDatabase[currentUserTag];
+      
+      if (user.banUntil) {
+        if (Date.now() < user.banUntil) {
+          showBanModal(user.banReason, user.banUntil);
+          return;
+        } else {
+          delete user.banUntil;
+          delete user.banReason;
+          saveDatabase();
+        }
+      }
+
+      loadUserWallet(currentUserTag);
+      renderFullSearchList('');
+    } else {
+      renderSavedAccountsPage();
+    }
+  };
+
+  function renderSavedAccountsPage() {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    $('loginPage').classList.add('active');
+    $('bottomNav').style.display = 'none';
+    $('authHeader').innerHTML = `<button class="auth-btn" onclick="showCreateAccountForm()">إنشاء حساب جديد</button>`;
+
+    let accounts = Object.values(walletDatabase);
+    if (accounts.length > 0) {
+      $('savedAccountsSection').style.display = 'block';
+      $('authFormSection').style.display = 'none';
+      
+      let listHtml = '';
+      accounts.forEach(acc => {
+        let avatarHtml = acc.avatar ? `<img src="${acc.avatar}" class="user-avatar" style="width:36px;height:36px;">` : `<div class="user-avatar" style="width:36px;height:36px;font-size:14px;">${acc.username.substring(1,2).toUpperCase()}</div>`;
+        listHtml += `
+          <div class="saved-account-item" onclick="directLogin('${acc.username}')">
+            <div style="display:flex; align-items:center; gap:10px;">
+              ${avatarHtml}
+              <div>
+                <div style="font-weight:bold; color:var(--text);">${acc.username}</div>
+                <div style="font-size:11px; color:var(--muted); font-family:monospace;">${acc.uniqueId}</div>
+              </div>
+            </div>
+            <span style="color:var(--blue); font-weight:bold; font-size:13px;">دخول مباشر ←</span>
+          </div>
+        `;
+      });
+      $('savedAccountsList').innerHTML = listHtml;
+    } else {
+      showCreateAccountForm();
+    }
+  }
+
+  function directLogin(username) {
+    let user = walletDatabase[username];
+    if (!user) {
+      toast('الحساب غير موجود!');
+      return;
+    }
+
+    if (user.banUntil && Date.now() < user.banUntil) {
+      showBanModal(user.banReason, user.banUntil);
+      return;
+    }
+
+    currentUserTag = username;
+    localStorage.setItem('cmr_current_user_tag', currentUserTag);
+    loadUserWallet(currentUserTag);
+    renderFullSearchList('');
+    toast('تم تسجيل الدخول بنجاح 🎉');
+  }
+
+  function showCreateAccountForm() {
+    $('savedAccountsSection').style.display = 'none';
+    $('authFormSection').style.display = 'block';
+    $('formTitle').textContent = 'إنشاء حساب جديد بررمز مرور';
+    $('usernameInput').value = '';
+    $('passwordInput').value = '';
+    $('usernameInput').disabled = false;
+    window.isCreatingNew = true;
+    if (Object.keys(walletDatabase).length > 0) {
+      $('backAccountsBtn').style.display = 'block';
+    } else {
+      $('backAccountsBtn').style.display = 'none';
+    }
+  }
+
+  function backToSavedAccounts() {
+    renderSavedAccountsPage();
+  }
+
+  function processAuthentication() {
+    let username = $('usernameInput').value.trim().toLowerCase();
+    let password = $('passwordInput').value.trim();
+
+    if (!username.startsWith('@')) {
+      toast('اسم المستخدم يجب أن يبدأ بـ @ !');
+      return;
+    }
+
+    if (password === '') {
+      toast('الرجاء إدخال كلمة المرور!');
+      return;
+    }
+
+    if (walletDatabase[username]) {
+      toast('اسم المستخدم مستخدم مسبقاً، اختر غيره!');
+      return;
+    }
+    if (username.length < 4 || !/^[a-zA-Z0-9_@]+$/.test(username)) {
+      toast('يوزر غير صالح، استخدم حروف وأرقام إنجليزية فقط');
+      return;
+    }
+
+    activeOTP = Math.floor(1000 + Math.random() * 9000).toString();
+    $('generatedOTP').textContent = activeOTP;
+    window.pendingNewUser = { username, password };
+
+    $('authFormSection').style.display = 'none';
+    $('stepVerification').style.display = 'block';
+  }
+
+  function cancelVerification() {
+    $('stepVerification').style.display = 'none';
+    $('authFormSection').style.display = 'block';
+    $('otpInput').value = '';
+    window.pendingNewUser = null;
+  }
+
+  function verifyAndCreateAccount() {
+    let userOtp = $('otpInput').value.trim();
+    if (userOtp !== activeOTP) {
+      toast('رمز التحقق غير صحيح!');
+      return;
+    }
+
+    let newUser = window.pendingNewUser;
+    let uniqueId = generateUniqueCode();
+    
+    walletDatabase[newUser.username] = {
+      username: newUser.username,
+      password: newUser.password,
+      uniqueId: uniqueId,
+      avatar: '',
+      balance: 0.00,
+      messages: []
+    };
+    saveDatabase();
+
+    currentUserTag = newUser.username;
+    localStorage.setItem('cmr_current_user_tag', currentUserTag);
+
+    $('stepVerification').style.display = 'none';
+    $('otpInput').value = '';
+    loadUserWallet(currentUserTag);
+    renderFullSearchList('');
+    toast('تم إنشاء الحساب وحفظ كلمة المرور بنجاح 🎉');
+  }
+
+  function showBanModal(reason, expiryTime) {
+    $('banReasonText').textContent = reason || 'تم حظر حسابك لمخالفة التعليمات.';
+    $('banExpiryText').textContent = new Date(expiryTime).toLocaleString('ar');
+    $('banModal').style.display = 'flex';
+  }
+
+  function forceLogoutDueToBan() {
+    $('banModal').style.display = 'none';
+    logout();
+  }
+
+  function logout() {
+    $('logoutConfirmModal').style.display = 'flex';
+  }
+
+  function closeLogoutModal() {
+    $('logoutConfirmModal').style.display = 'none';
+  }
+
+  function confirmLogout() {
+    localStorage.removeItem('cmr_current_user_tag');
+    currentUserTag = null;
+    stopScannerCamera();
+    $('banModal').style.display = 'none';
+    $('logoutConfirmModal').style.display = 'none';
+    renderSavedAccountsPage();
+    toast('تم تسجيل الخروج بنجاح');
+  }
+
+  function adminUnbanUser() {
+    if (currentUserTag !== '@cmr') return;
+    let target = $('banUserTag').value.trim().toLowerCase();
+
+    if (!walletDatabase[target]) {
+      toast('المستخدم غير موجود!');
+      return;
+    }
+
+    if (!walletDatabase[target].banUntil) {
+      toast('هذا المستخدم غير مبند أصلاً!');
+      return;
+    }
+
+    delete walletDatabase[target].banUntil;
+    delete walletDatabase[target].banReason;
+    saveDatabase();
+
+    $('banUserTag').value = '';
+    toast(`تم فك الحظر (الباند) عن المستخدم ${target} بنجاح 🎉`);
+  }
+
+  function downloadMyQRCode() {
+    let qrCanvas = document.querySelector('#userQRCode canvas');
+    if (!qrCanvas) {
+      toast('جاري توليد الباركود، حاول بعد قليل...');
+      return;
+    }
+
+    let tempCanvas = document.createElement('canvas');
+    let size = qrCanvas.width;
+    tempCanvas.width = size;
+    tempCanvas.height = size;
+    let ctx = tempCanvas.getContext('2d');
+
+    ctx.drawImage(qrCanvas, 0, 0);
+
+    let centerX = size / 2;
+    let centerY = size / 2;
+    let radius = size * 0.13;
+
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius + 3, 0, 2 * Math.PI);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+    ctx.fillStyle = '#101b32';
+    ctx.fill();
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#ffffff';
+    ctx.stroke();
+
+    ctx.fillStyle = '#76a6ff';
+    ctx.font = 'bold ' + (size * 0.07) + 'px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('CMR', centerX, centerY);
+
+    let imageURL = tempCanvas.toDataURL('image/png');
+    let downloadLink = document.createElement('a');
+    downloadLink.href = imageURL;
+    downloadLink.download = `CMR_QRCode_${walletDatabase[currentUserTag].uniqueId}.png`;
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+    toast('تم تحميل صورة الباركود بنجاح 📥');
+  }
+
+  function playNotificationSound() {
+    try {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.15);
+      
+      gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+      
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.4);
+    } catch (e) {}
+  }
+
+  function generateUniqueCode() {
+    let code;
+    let exists = true;
+    let chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    while (exists) {
+      let randomPart = '';
+      for (let i = 0; i < 9; i++) {
+        randomPart += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      code = 'CMR_' + randomPart;
+      exists = Object.values(walletDatabase).some(user => user.uniqueId === code);
+    }
+    return code;
+  }
+
+  function loadUserWallet(tag) {
+    let userData = walletDatabase[tag];
+    if (!userData) return;
+    if (!userData.messages) userData.messages = [];
+
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    $('walletApp').classList.add('active');
+    $('bottomNav').style.display = 'flex';
+
+    if (tag === '@cmr') {
+      $('adminNavContainer').innerHTML = `<button data-page="adminPanel"><svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:currentColor;"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>الإدارة</button>`;
+      document.querySelectorAll('.nav button').forEach(b => b.onclick = () => go(b.dataset.page));
+    } else {
+      $('adminNavContainer').innerHTML = '';
+    }
+    
+    $('authHeader').innerHTML = `<button class="auth-btn" onclick="showCreateAccountForm()">إنشاء حساب</button>`;
+    $('welcomeUser').textContent = `أهلاً بك، ${userData.username}`;
+    $('userInfoDisplay').textContent = `اسم المستخدم: ${userData.username}`;
+    $('userUniqueIdDisplay').textContent = `الرمز الفريد: ${userData.uniqueId}`;
+    $('balance').textContent = fmt(userData.balance);
+    $('walletUniqueId').textContent = userData.uniqueId;
+
+    renderAvatarHTML(userData);
+    generateUserQRCode(userData.uniqueId);
+  }
+
+  function generateUserQRCode(uid) {
+    let qrContainer = $('userQRCode');
+    qrContainer.innerHTML = '';
+    // تم زيادة الحجم ودعم تصحيح الأخطاء لزيادة سرعة وسلاسة القراءة من شاشات الهواتف الأخرى
+    new QRCode(qrContainer, {
+      text: uid,
+      width: 200,
+      height: 200,
+      colorDark : "#142033",
+      colorLight : "#ffffff",
+      correctLevel : QRCode.CorrectLevel.H
+    });
+  }
+
+  function renderAvatarHTML(userData) {
+    let html = '';
+    if (userData.avatar && userData.avatar.trim() !== '') {
+      html = `<img src="${userData.avatar}" class="user-avatar" alt="صورة الحساب">`;
+    } else {
+      let initial = userData.username ? userData.username.substring(1, 2).toUpperCase() : 'U';
+      html = `<div class="user-avatar">${initial}</div>`;
+    }
+    $('headerAvatarContainer').innerHTML = html;
+  }
+
+  function uploadAvatarFile() {
+    if (!currentUserTag) return;
+    let fileInput = $('avatarFileinput');
+    
+    if (fileInput.files && fileInput.files[0]) {
+      let file = fileInput.files[0];
+      let reader = new FileReader();
+      
+      reader.onload = function(e) {
+        walletDatabase[currentUserTag].avatar = e.target.result;
+        saveDatabase();
+        loadUserWallet(currentUserTag);
+        renderFullSearchList($('fullSearchInput').value);
+        toast('تم تحديث وعرض صورتك الشخصية بنجاح 🖼️');
+      }
+      
+      reader.readAsDataURL(file);
+    } else {
+      toast('الرجاء اختيار صورة من المعرض أو الملفات أولاً');
+    }
+  }
+
+  function renderMessages(messages) {
+    let container = $('messagesContainer');
+    if (!messages || messages.length === 0) {
+      container.innerHTML = '<div class="muted" style="text-align: center; padding: 40px;">لا توجد إشعارات أو رسائل إيداع حتى الآن.</div>';
+      return;
+    }
+
+    container.innerHTML = messages.map(m => `
+      <div class="msg-card">
+        <div class="msg-header">
+          <div class="msg-sender-info">
+            <span>📥</span> تحويل وارد من: <span style="color: var(--blue);">${m.sender}</span>
+          </div>
+          <div class="msg-amount-badge">+${fmt(m.amount)}</div>
+        </div>
+        <div class="msg-body-box">
+          <b>الرسالة المرفقة:</b> ${m.memo && m.memo.trim() !== '' ? m.memo : 'لا توجد رسالة كتابية مرفقة'}
+        </div>
+        <div class="msg-footer">
+          <span>CMR Secure Notification</span>
+          <span>📅 ${m.date}</span>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function handleScannedResult(scannedText) {
+    let cleanedText = scannedText.trim();
+    let foundUser = null;
+
+    for (let key in walletDatabase) {
+      let u = walletDatabase[key];
+      if (u.uniqueId.toUpperCase() === cleanedText.toUpperCase() || u.username.toLowerCase() === cleanedText.toLowerCase()) {
+        foundUser = u;
+        break;
+      }
+    }
+
+    if (foundUser) {
+      if (foundUser.username === currentUserTag) {
+        toast('لا يمكنك التحويل لنفسك!');
+        return;
+      }
+      toast('تم التحقق من الباركود بنجاح! جاري تحويلك لصفحة التحويل...');
+      $('recipient').value = foundUser.username;
+      stopScannerCamera();
+      go('transfer');
+    } else {
+      toast('رمز الباركود غير صحيح أو غير مسجل في المحفظة!');
+    }
+  }
+
+  function startScannerCameraManually() {
+    if (html5QrCode) return;
+    try {
+      html5QrCode = new Html5Qrcode("reader");
+      html5QrCode.start(
+        { facingMode: "environment" },
+        { fps: 15, qrbox: { width: 250, height: 250 } },
+        (decodedText) => {
+          handleScannedResult(decodedText);
+        },
+        (errorMessage) => {}
+      ).then(() => {
+        $('stopCamBtn').style.display = 'block';
+      }).catch(err => {
+        toast('تعذر فتح الكاميرا، تأكد من منح الصلاحيات.');
+      });
+    } catch (e) {
+      toast('خطأ في تشغيل الكاميرا.');
+    }
+  }
+
+  function stopScannerCamera() {
+    if (html5QrCode) {
+      html5QrCode.stop().then(() => {
+        html5QrCode = null;
+        $('stopCamBtn').style.display = 'none';
+      }).catch(err => {
+        html5QrCode = null;
+        $('stopCamBtn').style.display = 'none';
+      });
+    }
+  }
+
+  function scanQrFromFile(input) {
+    if (input.files && input.files[0]) {
+      let file = input.files[0];
+      const tempScanner = new Html5Qrcode("reader");
+      tempScanner.scanFile(file, true)
+        .then(decodedText => {
+          handleScannedResult(decodedText);
+        })
+        .catch(err => {
+          toast('فشل قراءة الباركود من الصورة المرفوعة!');
+        });
+    }
+  }
+
+  function adminUpdateBalance() {
+    if (currentUserTag !== '@cmr') return;
+    let target = $('adminTargetUser').value.trim().toLowerCase();
+    let amt = Number($('adminAmount').value);
+    let action = $('adminActionType').value;
+
+    if (!walletDatabase[target]) {
+      toast('المستخدم غير موجود!');
+      return;
+    }
+    if (!Number.isFinite(amt) || amt <= 0) {
+      toast('أدخل مبلغاً صحيحاً');
+      return;
+    }
+
+    if (action === 'add') {
+      walletDatabase[target].balance += amt;
+      walletDatabase[target].messages.unshift({
+        sender: 'الإدارة (الأدمن)',
+        amount: amt,
+        date: new Date().toLocaleString('ar'),
+        memo: 'إضافة رصيد إداري لحسابك'
+      });
+      toast('تمت زيادة رصيد المستخدم بنجاح');
+    } else {
+      if (amt > walletDatabase[target].balance) {
+        toast('رصيد المستخدم لا يتحمل هذا الخصم!');
+        return;
+      }
+      walletDatabase[target].balance -= amt;
+      walletDatabase[target].messages.unshift({
+        sender: 'الإدارة (الأدمن - خصم)',
+        amount: amt,
+        date: new Date().toLocaleString('ar'),
+        memo: 'خصم رصيد إداري'
+      });
+      toast('تم خصم المبلغ من رصيد المستخدم بنجاح');
+    }
+
+    saveDatabase();
+    $('adminTargetUser').value = '';
+    $('adminAmount').value = '';
+  }
+
+  function adminChangeUsername() {
+    if (currentUserTag !== '@cmr') return;
+    let oldTag = $('oldUsername').value.trim().toLowerCase();
+    let newTag = $('newUsername').value.trim().toLowerCase();
+
+    if (!walletDatabase[oldTag]) {
+      toast('اليوزر القديم غير موجود!');
+      return;
+    }
+    if (!newTag.startsWith('@') || newTag.length < 4) {
+      toast('اليوزر الجديد يجب أن يبدأ بـ @ ويكون 3 حروف على الأقل');
+      return;
+    }
+    if (walletDatabase[newTag]) {
+      toast('اليوزر الجديد مستخدم من قبل شخص آخر!');
+      return;
+    }
+
+    walletDatabase[newTag] = walletDatabase[oldTag];
+    walletDatabase[newTag].username = newTag;
+    
+    delete walletDatabase[oldTag];
+    saveDatabase();
+    
+    $('oldUsername').value = '';
+    $('newUsername').value = '';
+    toast('تم تغيير يوزر المستخدم بنجاح 🎉');
+  }
+
+  function adminKickUser() {
+    if (currentUserTag !== '@cmr') return;
+    let target = $('kickUserTag').value.trim().toLowerCase();
+
+    if (!walletDatabase[target]) {
+      toast('المستخدم غير موجود!');
+      return;
+    }
+    if (target === '@cmr') {
+      toast('لا يمكنك طرد حساب الأدمن الأساسي!');
+      return;
+    }
+
+    delete walletDatabase[target];
+    saveDatabase();
+    $('kickUserTag').value = '';
+    toast('تم طرد وحذف المستخدم نهائياً 🚫');
+  }
+
+  function adminBanUser() {
+    if (currentUserTag !== '@cmr') return;
+    let target = $('banUserTag').value.trim().toLowerCase();
+    let val = Number($('banValueInput').value);
+    let unit = $('banUnitSelect').value;
+    let reason = $('banReasonInput').value.trim();
+
+    if (!walletDatabase[target]) {
+      toast('المستخدم غير موجود!');
+      return;
+    }
+    if (target === '@cmr') {
+      toast('لا يمكنك تبنيد حساب الأدمن!');
+      return;
+    }
+    if (!Number.isFinite(val) || val <= 0) {
+      toast('أدخل قيمة صحيحة لمدّة الحظر');
+      return;
+    }
+
+    let multiplier = 1000;
+    let unitNameAr = 'ثانية';
+
+    if (unit === 'seconds') {
+      multiplier = 1000;
+      unitNameAr = 'ثوانٍ';
+    } else if (unit === 'minutes') {
+      multiplier = 60 * 1000;
+      unitNameAr = 'دقائق';
+    } else if (unit === 'hours') {
+      multiplier = 60 * 60 * 1000;
+      unitNameAr = 'ساعات';
+    }
+
+    let banUntilTime = Date.now() + (val * multiplier);
+    walletDatabase[target].banUntil = banUntilTime;
+    walletDatabase[target].banReason = reason !== '' ? reason : 'تم حظر حسابك لمخالفة شروط الخدمة.';
+    saveDatabase();
+
+    if (currentUserTag === target) {
+      showBanModal(walletDatabase[target].banReason, banUntilTime);
+    }
+
+    $('banUserTag').value = '';
+    $('banValueInput').value = '';
+    $('banReasonInput').value = '';
+    toast(`تم تبنيد المستخدم بنجاح لمدة ${val} ${unitNameAr} ⏳`);
+  }
+
+  function executeFullSearch(query) {
+    renderFullSearchList(query);
+  }
+
+  function renderFullSearchList(query) {
+    let resultsBox = $('fullSearchResults');
+    resultsBox.innerHTML = '';
+    
+    let q = (query || '').trim().toLowerCase();
+    let matches = [];
+
+    for (let key in walletDatabase) {
+      let u = walletDatabase[key];
+      if (u.username.toLowerCase().includes(q) || u.uniqueId.toLowerCase().includes(q)) {
+        matches.push(u);
+      }
+    }
+
+    if (matches.length === 0) {
+      resultsBox.innerHTML = '<div class="muted" style="text-align:center; padding: 20px;">لا يوجد مستخدم بهذا الاسم أو الرمز الفريد.</div>';
+      return;
+    }
+
+    matches.forEach(user => {
+      let div = document.createElement('div');
+      div.className = 'search-item';
+      
+      let avatarHtml = user.avatar ? `<img src="${user.avatar}" class="user-avatar">` : `<div class="user-avatar">${user.username.substring(1,2).toUpperCase()}</div>`;
+      
+      div.innerHTML = `
+        ${avatarHtml}
+        <div style="flex: 1;">
+          <div style="font-weight:bold; color:var(--text);">${user.username} ${user.username === currentUserTag ? '(أنت)' : ''}</div>
+          <div style="font-size:12px; color:var(--muted); font-family:monospace; direction:ltr; text-align:right;">${user.uniqueId}</div>
+        </div>
+      `;
+
+      div.onclick = () => {
+        $('recipient').value = user.username;
+        go('transfer');
+      };
+
+      resultsBox.appendChild(div);
+    });
+  }
+
+  function transferSearchUsers(query) {
+    let resultsBox = $('transferSearchResults');
+    resultsBox.innerHTML = '';
+    
+    let q = query.trim().toLowerCase();
+    let matches = [];
+
+    for (let key in walletDatabase) {
+      let u = walletDatabase[key];
+      if (key === currentUserTag) continue;
+
+      if (u.username.toLowerCase().includes(q) || u.uniqueId.toLowerCase().includes(q)) {
+        matches.push(u);
+      }
+    }
+
+    if (matches.length === 0 || q === '') {
+      resultsBox.style.display = 'none';
+      return;
+    }
+
+    resultsBox.style.display = 'block';
+    matches.forEach(user => {
+      let div = document.createElement('div');
+      div.className = 'search-item';
+      
+      let avatarHtml = user.avatar ? `<img src="${user.avatar}" class="user-avatar">` : `<div class="user-avatar">${user.username.substring(1,2).toUpperCase()}</div>`;
+      
+      div.innerHTML = `
+        ${avatarHtml}
+        <div>
+          <div style="font-weight:bold; color:var(--text);">${user.username}</div>
+          <div style="font-size:11px; color:var(--muted); font-family:monospace;">${user.uniqueId}</div>
+        </div>
+      `;
+
+      div.onclick = () => {
+        $('recipient').value = user.username;
+        resultsBox.style.display = 'none';
+      };
+
+      resultsBox.appendChild(div);
+    });
+  }
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.search-container')) {
+      $('transferSearchResults').style.display = 'none';
+    }
+  });
+
+  function send() {
+    if(!currentUserTag || !walletDatabase[currentUserTag]) return;
+
+    let recipientInput = $('recipient').value.trim();
+    let amt = Number($('amount').value);
+    let memo = $('memo').value.trim();
+
+    let targetTag = null;
+    for (let key in walletDatabase) {
+      let user = walletDatabase[key];
+      if (user.username.toLowerCase() === recipientInput.toLowerCase() || 
+          user.uniqueId.toUpperCase() === recipientInput.toUpperCase()) {
+        targetTag = key;
+        break;
+      }
+    }
+
+    if (!targetTag) {
+      toast('لم يتم العثور على مستخدم بهذا اليوزر أو الرمز الفريد!');
+      return;
+    }
+
+    if (targetTag === currentUserTag) {
+      toast('لا يمكنك التحويل لنفسك!');
+      return;
+    }
+
+    if(!Number.isFinite(amt) || amt <= 0) { 
+      toast('أدخل مبلغاً صحيحاً'); 
+      return; 
+    }
+
+    let senderData = walletDatabase[currentUserTag];
+    if(amt > senderData.balance) { 
+      toast('رصيد المستخدم غير كافٍ للتحويل!'); 
+      return; 
+    }
+
+    let receiverData = walletDatabase[targetTag];
+    if (!receiverData.messages) receiverData.messages = [];
+
+    senderData.balance -= amt;
+
+    let transferDate = new Date().toLocaleString('ar');
+    receiverData.balance += amt;
+
+    receiverData.messages.unshift({
+      sender: senderData.username,
+      amount: amt,
+      date: transferDate,
+      memo: memo
+    });
+
+    saveDatabase();
+    loadUserWallet(currentUserTag);
+
+    playNotificationSound();
+
+    $('recipient').value = '';
+    $('amount').value = '';
+    $('memo').value = '';
+    toast('تم إرسال التحويل بنجاح 💸');
+    go('walletApp');
+  }
+
+  function saveDatabase() {
+    localStorage.setItem('cmr_wallets_v2', JSON.stringify(walletDatabase));
+  }
+
+  function go(page){
+    if (page !== 'scannerPage') {
+      stopScannerCameraScannerCamera();
+    }
+
+    document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === page));
+    document.querySelectorAll('.nav button').forEach(b => b.classList.toggle('active', b.dataset.page === page));
+    
+    if(page === 'searchPage') {
+      renderFullSearchList($('fullSearchInput').value);
+    }
+    if(page === 'messagesPage' && currentUserTag) {
+      renderMessages(walletDatabase[currentUserTag].messages || []);
+    }
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  document.querySelectorAll('.nav button').forEach(b => b.onclick = () => go(b.dataset.page));
+  function fmt(n){return '$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}
+  function toast(m){$('toast').textContent=m;$('toast').style.display='block';setTimeout(()=>$('toast').style.display='none',2200)}
+  function copyId(){
+    let idText = $('walletUniqueId').textContent;
+    navigator.clipboard.writeText(idText).then(()=>toast('تم نسخ الرمز الفريد للمحفظة'));
+  }
+</script>
+</body>
+</html>

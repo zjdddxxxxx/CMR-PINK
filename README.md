@@ -1,1 +1,1 @@
-# CMR-PINK
+# CMRPINK

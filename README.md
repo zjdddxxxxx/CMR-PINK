@@ -1,1 +1,1 @@
-# CMRPINK
+CMR
